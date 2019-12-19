@@ -1,22 +1,25 @@
 let canvas = document.getElementById('canvas');
 let ctx = canvas.getContext('2d');
+let timer = null;
 
 let bg = new Image();
 let pipeUp = new Image();
 let pipeDown = new Image();
 let get_ready = new Image();
-let logo = new Image();
+// let logo = new Image();
 
 let bird = new Image();
 let death = new Image();
 
 
-// основная часть
+// изображения
 bg.src = "assets\\background.png";
 pipeUp.src = "assets\\top.png";
 pipeDown.src = "assets\\bottom.png";
-get_ready.src = "assets\\getready.png";
-logo.src = "assets\\logo.png";
+
+let ready = ["", "assets\\getready.png"];
+get_ready.src = ready[1];
+// logo.src = "assets\\logo.png";
 
 
 // птичка
@@ -33,8 +36,7 @@ score_audio.src = "assets\\sounds\\score.mp3";
 
 
 // позиция птички
-let xPos = 10;
-let yPos = 150;
+let xPos, yPos;
 let gravity = 2;
 
 
@@ -42,22 +44,29 @@ let gravity = 2;
 let gap = 90;
 let pipe = [];
 
-pipe.push({
+pipe.push({ // добавляем первое припятствие
 	x : canvas.width,
-	y : Math.floor(Math.random() * pipeUp.height) - pipeUp.height
-})
+	y : 0
+});
 
 
+// счет
 score = 0;
+record = 0;
 
 
-function moveUp() {
-	fly.play();
+function moveUp(e) {
+	if (e.keyCode != 32) {
+		return;
+	}
+
 	bird.src = state[1];
 
 	pos = yPos - 25;
 
 	function _animation() {
+		// гладкий взлет вверх
+
 		if (pos > yPos) {
 			bird.src = state[0];
 			return;
@@ -68,6 +77,7 @@ function moveUp() {
 	}
 
 	_animation();
+	fly.play();
 }
 
 
@@ -83,21 +93,32 @@ function loop() {
 		if(pipe[i].x == 100) {
 			pipe.push({
 				x : canvas.width,
-				y : Math.floor(Math.random() * (pipeUp.height+25)) - pipeUp.height
+				y : -1 * (Math.floor(Math.random() * (pipeUp.height-50)))
 			});
 		}
 
-		// отслеживание прикосновений
-		if (
-			xPos + bird.width-5 >= pipe[i].x &&
-			xPos <= pipe[i].x + pipeUp.width-5 &&
-				(yPos+5 <= pipe[i].y + pipeUp.height || yPos + bird.height >= pipe[i].y + pipeUp.height + gap) || 
-				yPos + bird.height-20 >= canvas.height
-			) {
-				return location.reload()
-			}
+		// столкновение с низом
+		if (yPos + bird.height >= canvas.height) {
+			return location.reload()
+		}
 
-		if(pipe[i].x == -10) {
+		// столкновение со стеной
+		if (xPos + bird.width-5 >= pipe[i].x) { // птичка вошла в позицию стены
+			if (xPos+10 <= pipe[i].x + pipeUp.width) { // птичка еще не прошла через стены
+				if ( (yPos+3 <= pipe[i].y + pipeUp.height) || (yPos + bird.height >= pipe[i].y + pipeUp.height + gap) ) {
+					// если позиция птички по Y меньше позиции нижней части верхней стены
+					// либо позиция птички по Y больше позиции верхней части нижней стены
+
+					if (score > record) {
+						record = score;
+					}
+
+					return reload()
+				}
+			}
+		}
+
+		if(pipe[i].x == -50) {
 			score++;
 			score_audio.play();
 		}
@@ -106,13 +127,55 @@ function loop() {
 	ctx.drawImage(bird, xPos, yPos);
 
 	yPos += gravity;
-	ctx.fillStyle = "#000";
-	ctx.font = "24px Verdana";
-	ctx.fillText("Счет: " + score, 10, canvas.height - 20);
+
+	ctx.fillText("Счет: " + score, 5, 20);
+
+	if (record != 0) {
+		ctx.fillText("Рекорд: " + record, 5, 40);
+	}
+}
+
+
+function start() {
+	get_ready.src = ready[0];
+	document.addEventListener('keydown', moveUp)
+	document.removeEventListener('click', start)
+
+	timer = setInterval(loop, 1000/60); // 60 FPS
+}
+
+
+function reload() {
+	if (timer != null) {
+		clearInterval(timer);
+	}
+
+	document.removeEventListener('keydown', moveUp)
+
+	pipe = [];
+	xPos = 10;
+	yPos = 180;
+	score = 0;
+	pipe.push({x : canvas.width, y : 0});
+
+	ctx.drawImage(bg, 0, 0);
+	ctx.drawImage(bird, xPos, yPos);
+
+	get_ready.src = ready[1];
+	ctx.drawImage(get_ready, 13, 100);
+
+	ctx.fillText("Счет: " + score, 5, 20);
+
+	if (record != 0) {
+		ctx.fillText("Рекорд: " + record, 5, 40);
+	}
+
+	document.addEventListener('click', start);
 }
 
 
 window.onload = function() {
-	document.addEventListener('keydown', moveUp);
-	setInterval(loop, 1000/60); // 60 FPS
+	ctx.fillStyle = "#000";
+	ctx.font = "bold 21px Calibri";
+	reload();
 }
