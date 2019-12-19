@@ -193,7 +193,6 @@ let reload = function(fall_ = false) {
 }
 
 
-
 window.onload = function() {
 	reload();
 }
