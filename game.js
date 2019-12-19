@@ -192,6 +192,6 @@ let reload = function(fall_ = false) {
 }
 
 
-window.onload = function() {
+score_audio.onloadeddata = function() {
 	reload();
 }
