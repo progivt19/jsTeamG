@@ -22,8 +22,7 @@ get_ready.src = "assets\\getready.png";
 
 // птичка
 let state = ["assets\\bird\\1.png", "assets\\bird\\2.png", "assets\\bird\\dead.png"];
-bird.src = state[2];
-bird.src = state[1];
+
 bird.src = state[0];
 bird_default.src = state[0];
 
@@ -192,7 +191,6 @@ let reload = function(fall_ = false) {
 
 	canvas.addEventListener('click', start);
 }
-
 
 score_audio.onloadeddata = function() {
 	reload();
