@@ -1,16 +1,15 @@
 let canvas = document.getElementById('canvas');
 let ctx = canvas.getContext('2d');
+
+
 let timer = null;
 
 let bg = new Image();
 let pipeUp = new Image();
 let pipeDown = new Image();
 let get_ready = new Image();
-// let logo = new Image();
 
 let bird = new Image();
-let death = new Image();
-
 
 // изображения
 bg.src = "assets\\background.png";
@@ -18,13 +17,14 @@ pipeUp.src = "assets\\top.png";
 pipeDown.src = "assets\\bottom.png";
 
 let ready = ["", "assets\\getready.png"];
+get_ready.src = ready[0];
 get_ready.src = ready[1];
-// logo.src = "assets\\logo.png";
 
 
 // птичка
-let state = ["assets\\bird\\1.png", "assets\\bird\\2.png"];
-death.src = "assets\\bird\\dead.png"
+let state = ["assets\\bird\\1.png", "assets\\bird\\2.png", "assets\\bird\\dead.png"];
+bird.src = state[2];
+bird.src = state[1];
 bird.src = state[0];
 
 
@@ -36,26 +36,28 @@ score_audio.src = "assets\\sounds\\score.mp3";
 
 
 // позиция птички
-let xPos, yPos;
+let xPos = 0;
+let yPos = 0;
 let gravity = 2;
 
 
 // препятствия
 let gap = 90;
 let pipe = [];
+let speed = 1; // скорость движения препятствий
 
 pipe.push({ // добавляем первое припятствие
-	x : canvas.width,
-	y : 0
+	x: canvas.width,
+	y: 0
 });
 
 
 // счет
-score = 0;
-record = 0;
+let score = 0;
+let record = 0;
 
 
-function moveUp(e) {
+let moveUp = function(e) {
 	if (e.keyCode != 32) {
 		return;
 	}
@@ -65,7 +67,7 @@ function moveUp(e) {
 	pos = yPos - 25;
 
 	function _animation() {
-		// гладкий взлет вверх
+		// гладкий взлет
 
 		if (pos > yPos) {
 			bird.src = state[0];
@@ -76,30 +78,38 @@ function moveUp(e) {
 		requestAnimationFrame(_animation);
 	}
 
-	_animation();
+	requestAnimationFrame(_animation);
 	fly.play();
 }
 
 
-function loop() {
+let loop = function() {
 	ctx.drawImage(bg, 0, 0);
 
 	for(var i = 0; i < pipe.length; i++) {
 		ctx.drawImage(pipeUp, pipe[i].x, pipe[i].y);
 		ctx.drawImage(pipeDown, pipe[i].x, pipe[i].y + pipeUp.height + gap);
 
-		pipe[i].x--;
+		pipe[i].x -= speed;
 
-		if(pipe[i].x == 100) {
+		if (pipe[i].x == 100) {
 			pipe.push({
-				x : canvas.width,
-				y : -1 * (Math.floor(Math.random() * (pipeUp.height-50)))
+				x: canvas.width,
+				y: -1 * (Math.floor(Math.random() * (pipeUp.height-50)))
 			});
 		}
 
 		// столкновение с низом
-		if (yPos + bird.height >= canvas.height) {
-			return location.reload()
+		if ((bird.src != state[2]) && (yPos + bird.height >= canvas.height)) {
+			document.removeEventListener('keydown', moveUp);
+			speed = 0;
+			gravity = 4;
+			bird.src = state[2];
+
+			if (yPos > canvas.height) {
+				clearInterval(timer);
+				return reload();
+			}
 		}
 
 		// столкновение со стеной
@@ -113,7 +123,15 @@ function loop() {
 						record = score;
 					}
 
-					return reload()
+					document.removeEventListener('keydown', moveUp);
+					speed = 0;
+					gravity = 3.5;
+					bird.src = state[2];
+
+					if (yPos > canvas.height) {
+						clearInterval(timer);
+						return reload();
+					}
 				}
 			}
 		}
@@ -126,7 +144,7 @@ function loop() {
 
 	ctx.drawImage(bird, xPos, yPos);
 
-	yPos += gravity;
+	yPos += gravity; // действие гравитации
 
 	ctx.fillText("Счет: " + score, 5, 20);
 
@@ -136,46 +154,46 @@ function loop() {
 }
 
 
-function start() {
+let start = function() {
 	get_ready.src = ready[0];
-	document.addEventListener('keydown', moveUp)
-	document.removeEventListener('click', start)
+	canvas.removeEventListener('click', start);
+	document.addEventListener('keydown', moveUp);
 
 	timer = setInterval(loop, 1000/60); // 60 FPS
 }
 
 
-function reload() {
-	if (timer != null) {
-		clearInterval(timer);
-	}
+let reload = function(fall_ = false) {
+	document.removeEventListener('keydown', moveUp);
 
-	document.removeEventListener('keydown', moveUp)
+	ctx.fillStyle = "#000";
+	ctx.font = "bold 21px Calibri";
+	get_ready.src = ready[1];
+	bird.src = state[0];
 
 	pipe = [];
+	gravity = 2;
 	xPos = 10;
 	yPos = 180;
 	score = 0;
-	pipe.push({x : canvas.width, y : 0});
+	speed = 1;
+	pipe.push({x: canvas.width, y: 0});
 
 	ctx.drawImage(bg, 0, 0);
 	ctx.drawImage(bird, xPos, yPos);
 
-	get_ready.src = ready[1];
 	ctx.drawImage(get_ready, 13, 100);
-
 	ctx.fillText("Счет: " + score, 5, 20);
 
 	if (record != 0) {
 		ctx.fillText("Рекорд: " + record, 5, 40);
 	}
 
-	document.addEventListener('click', start);
+	canvas.addEventListener('click', start);
 }
 
 
+
 window.onload = function() {
-	ctx.fillStyle = "#000";
-	ctx.font = "bold 21px Calibri";
 	reload();
 }
