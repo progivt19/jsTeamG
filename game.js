@@ -35,7 +35,14 @@ fly.src = "assets\\sounds\\fly.mp3";
 score_audio.src = "assets\\sounds\\score.mp3";
 damage.src = "assets\\sounds\\damage.mp3";
 game_over.src = "assets\\sounds\\game_over.mp3";
-ostList = ["assets\\sounds\\ost\\ost1.ogg", "assets\\sounds\\ost\\ost2.ogg", "assets\\sounds\\ost\\ost3.ogg", "assets\\sounds\\ost\\ost4.ogg", "assets\\sounds\\ost\\ost5.ogg"];
+ostList = [
+	"assets\\sounds\\ost\\ost1.ogg", 
+	"assets\\sounds\\ost\\ost2.ogg", 
+	"assets\\sounds\\ost\\ost3.ogg", 
+	"assets\\sounds\\ost\\ost4.ogg", 
+	"assets\\sounds\\ost\\ost5.ogg",
+	"assets\\sounds\\ost\\ost6.ogg"
+	];
 
 // позиция птички, скорость ее постоянного снижения
 let xPos, yPos, gravity;
@@ -117,7 +124,7 @@ let loop = function() {
 		// столкновение со стеной
 		if (xPos + bird.width-5 >= pipe[i].x) { // птичка вошла в позицию стены
 			if (xPos+10 <= pipe[i].x + pipeUp.width) { // птичка еще не прошла через стены
-				if ( (yPos+3 <= pipe[i].y + pipeUp.height) || (yPos + bird.height >= pipe[i].y + pipeUp.height + gap) ) {
+				if ( (yPos+3 <= pipe[i].y + pipeUp.height) || (yPos + bird.height-2 >= pipe[i].y + pipeUp.height + gap) ) {
 					// если позиция птички по Y меньше позиции нижней части верхней стены
 					// либо позиция птички по Y больше позиции верхней части нижней стены
 
@@ -151,6 +158,11 @@ let loop = function() {
 let fall = async function() {
 	document.removeEventListener('keydown', moveUp);
 
+	// недорисиванное
+	ctx.drawImage(bird, xPos, yPos);
+	ctx.drawImage(pipeUp, pipe[pipe.length-1].x, pipe[pipe.length-1].y);
+	ctx.drawImage(pipeDown, pipe[pipe.length-1].x, pipe[pipe.length-1].y + pipeUp.height + gap);
+
 	if (animation_ != null) {
 		cancelAnimationFrame(animation_);
 	}
@@ -158,9 +170,9 @@ let fall = async function() {
 	cancelAnimationFrame(timer);
 	bg_music.pause();
 	bg_music.currentTime = 0;
-	await sleep(0.05);
+	await sleep(75);
 	damage.play();
-	await sleep(0.05);
+	await sleep((damage.duration - damage.currentTime)*1000);
 	game_over.play(); // проигрыш звука поражения
 
 	gravity = 5;
@@ -184,7 +196,7 @@ let fall = async function() {
 		}
 
 		if (yPos > canvas.height) {
-			await sleep(game_over.duration - game_over.currentTime - 2400); // пока не выполнится промис из функции, работа кода будет приостановлена
+			await sleep((game_over.duration - game_over.currentTime)*1000); // пока не выполнится промис из функции, работа кода будет приостановлена
 			ctx.clearRect(0, 0, canvas.width, canvas.height); // очистка канваса
 			bird.src = state[0]; // смена состояния на обычное
 			return reload(); // колесо сансары дало оборот
@@ -198,9 +210,9 @@ let fall = async function() {
 }
 
 
-function sleep(s) {
+function sleep(ms) {
 	// как только вызов функция завершится, промис примет выполненное состояние, до тех пор код будет находиться в состоянии ожидания
-	return new Promise(resolve => setTimeout(resolve, s*1000));
+	return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 
