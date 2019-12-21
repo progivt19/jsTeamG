@@ -164,6 +164,10 @@ let fall = function() {
 		ctx.drawImage(bird, xPos, yPos);
 		ctx.fillText("Счет: " + score, 5, 20);
 
+		if (record != 0) {
+			ctx.fillText("Рекорд: " + record, 5, 40);
+		}
+
 		if (yPos > canvas.height) {
 			await sleep(game_over.duration - game_over.currentTime); // пока не выполнится промис из функции, работа кода будет приостановлена
 			ctx.clearRect(0, 0, canvas.width, canvas.height); // очистка канваса
