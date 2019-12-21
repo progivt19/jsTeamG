@@ -27,14 +27,15 @@ bird_default.src = state[0];
 // звук взмаха, звук увеличения количества очков, звук поражения
 let fly = new Audio();
 let score_audio = new Audio();
+let damage = new Audio();
 let game_over = new Audio();
 let bg_music = new Audio();
 
 fly.src = "assets\\sounds\\fly.mp3";
 score_audio.src = "assets\\sounds\\score.mp3";
+damage.src = "assets\\sounds\\damage.mp3";
 game_over.src = "assets\\sounds\\game_over.mp3";
-bg_music.src = "assets\\sounds\\ost.mp3";
-
+ostList = ["assets\\sounds\\ost\\ost1.ogg", "assets\\sounds\\ost\\ost2.ogg", "assets\\sounds\\ost\\ost3.ogg", "assets\\sounds\\ost\\ost4.ogg", "assets\\sounds\\ost\\ost5.ogg"];
 
 // позиция птички, скорость ее постоянного снижения
 let xPos, yPos, gravity;
@@ -44,6 +45,14 @@ let gap, pipe, speed;
 
 // счет, рекорд
 let score, record = 0;
+
+
+function arrayRandElement(arr) {
+	// функция, возвращающая случайный элемент массива
+
+	let rand = Math.floor(Math.random() * arr.length);
+	return arr[rand];
+}
 
 
 let moveUp = function(e) {
@@ -139,7 +148,7 @@ let loop = function() {
 }
 
 
-let fall = function() {
+let fall = async function() {
 	document.removeEventListener('keydown', moveUp);
 
 	if (animation_ != null) {
@@ -149,6 +158,9 @@ let fall = function() {
 	cancelAnimationFrame(timer);
 	bg_music.pause();
 	bg_music.currentTime = 0;
+	await sleep(0.05);
+	damage.play();
+	await sleep(0.05);
 	game_over.play(); // проигрыш звука поражения
 
 	gravity = 5;
@@ -172,7 +184,7 @@ let fall = function() {
 		}
 
 		if (yPos > canvas.height) {
-			await sleep(game_over.duration - game_over.currentTime); // пока не выполнится промис из функции, работа кода будет приостановлена
+			await sleep(game_over.duration - game_over.currentTime - 2400); // пока не выполнится промис из функции, работа кода будет приостановлена
 			ctx.clearRect(0, 0, canvas.width, canvas.height); // очистка канваса
 			bird.src = state[0]; // смена состояния на обычное
 			return reload(); // колесо сансары дало оборот
@@ -188,7 +200,7 @@ let fall = function() {
 
 function sleep(s) {
 	// как только вызов функция завершится, промис примет выполненное состояние, до тех пор код будет находиться в состоянии ожидания
-	return new Promise(resolve => setTimeout(resolve, s*1000-2400));
+	return new Promise(resolve => setTimeout(resolve, s*1000));
 }
 
 
@@ -200,14 +212,20 @@ let start = function() {
 	задает вызов функции loop с интервалом в 1000/60 ms
 	*/
 
-	bg_music.play();
-	bg_music.onended = bg_music.play();
-
+	playMusic();
 	canvas.removeEventListener('click', start);
 	document.addEventListener('keydown', moveUp);
 
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
 	loop();
+}
+
+
+let playMusic = function() {
+	ost = arrayRandElement(ostList);
+	bg_music.src = ost;
+	bg_music.play();
+	bg_music.onended = () => playMusic();
 }
 
 
@@ -239,7 +257,7 @@ let reload = function() {
 	canvas.addEventListener('click', start); // присоединяем событие клика на начальном экране к функции start
 }
 
-bg_music.onloadeddata = function() {
+game_over.onloadeddata = function() {
 	ctx.fillStyle = "#000";
 	ctx.font = "bold 21px Calibri";
 	reload();
