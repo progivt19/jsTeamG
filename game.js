@@ -28,10 +28,12 @@ bird_default.src = state[0];
 let fly = new Audio();
 let score_audio = new Audio();
 let game_over = new Audio();
+let bg_music = new Audio();
 
 fly.src = "assets\\sounds\\fly.mp3";
 score_audio.src = "assets\\sounds\\score.mp3";
-game_over.src = "assets\\sounds\\game_over.mp3"
+game_over.src = "assets\\sounds\\game_over.mp3";
+bg_music.src = "assets\\sounds\\ost.mp3";
 
 
 // позиция птички, скорость ее постоянного снижения
@@ -145,7 +147,8 @@ let fall = function() {
 	}
 
 	cancelAnimationFrame(timer);
-
+	bg_music.pause();
+	bg_music.currentTime = 0;
 	game_over.play(); // проигрыш звука поражения
 
 	gravity = 5;
@@ -197,6 +200,9 @@ let start = function() {
 	задает вызов функции loop с интервалом в 1000/60 ms
 	*/
 
+	bg_music.play();
+	bg_music.onended = bg_music.play();
+
 	canvas.removeEventListener('click', start);
 	document.addEventListener('keydown', moveUp);
 
@@ -233,7 +239,7 @@ let reload = function() {
 	canvas.addEventListener('click', start); // присоединяем событие клика на начальном экране к функции start
 }
 
-game_over.onloadeddata = function() {
+bg_music.onloadeddata = function() {
 	ctx.fillStyle = "#000";
 	ctx.font = "bold 21px Calibri";
 	reload();
