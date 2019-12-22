@@ -266,7 +266,7 @@ let reload = function() {
 	canvas.addEventListener('click', start); // присоединяем событие клика на начальном экране к функции start
 }
 
-game_over.onloadeddata = function() {
+ostList[ostList.length-1].onloadeddata = function() {
 	ctx.fillStyle = "#000";
 	ctx.font = "bold 21px Calibri";
 	reload();
