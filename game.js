@@ -1,9 +1,13 @@
 let canvas = document.getElementById('canvas');
 let ctx = canvas.getContext('2d');
 
+ctx.fillStyle = "#000";
+ctx.font = "bold 21px Calibri";
+
 let timer = null; // айдишник setInterval
 let animation_ = null; // айдишник requestAnimationFrame
 let ost = null; // музыка
+
 
 // изображения
 let bg = new Image(); // фон
@@ -18,32 +22,25 @@ pipeUp.src = "assets\\top.png";
 pipeDown.src = "assets\\bottom.png";
 get_ready.src = "assets\\getready.png";
 
-// состояния птички: стандартная, взмах, смэрть
-let state = ["assets\\bird\\1.png", "assets\\bird\\2.png", "assets\\bird\\dead.png"];
-
+let state = ["assets\\bird\\1.png", "assets\\bird\\2.png", "assets\\bird\\dead.png"]; // состояния птички: стандартная, взмах, смэрть
 bird.src = state[0];
 bird_default.src = state[0];
 
 
-// звук взмаха, звук увеличения количества очков, звук поражения
+// звук взмаха, звук увеличения количества очков, звук поражения, фоновые мелодии
 let fly = new Audio();
 let score_audio = new Audio();
 let damage = new Audio();
 let game_over = new Audio();
-
-ostList = [];
-
-for (ost of ["ost1", "ost2", "ost3", "ost4", "ost5", "ost6"]) {
-	ostList.push(document.getElementById(ost))
-}
+let ostList = document.getElementById("osts").getElementsByTagName("audio"); // получаем все объекты аудио из блока span#osts
 
 fly.src = "assets\\sounds\\fly.mp3";
 score_audio.src = "assets\\sounds\\score.mp3";
 damage.src = "assets\\sounds\\damage.mp3";
 game_over.src = "assets\\sounds\\game_over.mp3";
 
-// позиция птички, скорость ее постоянного снижения
-let xPos, yPos, gravity;
+// позиция птички, скорость ее постоянного снижения; то, насколько будет птичка подниматься при каждом нажатии на space; то, как быстро птичка будет достигать этой величины
+let xPos, yPos, gravity, offset, offset_per_iteration;
 
 // пробел между препятствиями, список объектов, содержащий координаты препятствий, скорость движения препятствий(скорее булевое значение 1 - двигаются; 0 - не двигаются; значение больше 1 делают игру некрасивой)
 let gap, pipe, speed;
@@ -52,7 +49,7 @@ let gap, pipe, speed;
 let score, record = 0;
 
 
-function arrayRandElement(arr) {
+let arrayRandElement = function(arr) {
 	// функция, возвращающая случайный элемент массива
 
 	let rand = Math.floor(Math.random() * arr.length);
@@ -60,20 +57,31 @@ function arrayRandElement(arr) {
 }
 
 
+let playMusic = function() {
+	// функция для включения музыки
+
+	ost = arrayRandElement(ostList);
+	ost.play();
+	ost.onended = () => playMusic(); // включение следующего трека
+}
+
+
 let moveUp = function(e) {
 	/*
 	в качестве аргумента передается объект <События нажатия>, содержащий в себе информацию о нем(например, то, какая клавиша была нажата)
 	выполняется гладкая анимация полета птички, за счет последовательного изменения ее положения и последующей смены кадра
-	анимация, взмах крыльями, достигается переменной сменой текущих изображений, прикрепленных к объекту bird
-	после выполнения операций проигрывается звук взмаха
+	анимация(взмах крыльями) достигается переменной сменой изображений из списка state
+	после выполнения операции взлета проигрывается звук взмаха
 	*/
 
 	if (e.keyCode != 32) { // is Space pressed?
 		return;
 	}
 
+	cancelAnimationFrame(animation_); // закрываем предыдущий фрейм, чтобы не было неожиданных "подскоков"
+
 	bird.src = state[1]; // взмах
-	pos = yPos - 25; // та точка по Y, в которой должна будет оказаться птичка
+	let pos = yPos - offset; // та точка по Y, в которой должна будет оказаться птичка
 
 	function _animation() {
 		if (pos > yPos) {
@@ -81,7 +89,7 @@ let moveUp = function(e) {
 			return;
 		}
 
-		yPos-=5;
+		yPos-=offset_per_iteration;
 		animation_ = requestAnimationFrame(_animation);
 	}
 
@@ -156,7 +164,7 @@ let loop = function() {
 let fall = async function() {
 	document.removeEventListener('keydown', moveUp);
 
-	// недорисиванное
+	// рисовка недорисиванного
 	ctx.drawImage(bird, xPos, yPos);
 	ctx.drawImage(pipeUp, pipe[pipe.length-1].x, pipe[pipe.length-1].y);
 	ctx.drawImage(pipeDown, pipe[pipe.length-1].x, pipe[pipe.length-1].y + pipeUp.height + gap);
@@ -166,9 +174,10 @@ let fall = async function() {
 	}
 
 	cancelAnimationFrame(timer);
-	ost.pause();
+	ost.pause(); // остановка фоновой музыки
 	ost.currentTime = 0;
-	await sleep(75);
+
+	await sleep(75); // пока не выполнится промис из функции, работа кода будет приостановлена
 	damage.play();
 	await sleep((damage.duration - damage.currentTime)*1000);
 	game_over.play(); // проигрыш звука поражения
@@ -194,7 +203,7 @@ let fall = async function() {
 		}
 
 		if (yPos > canvas.height) {
-			await sleep((game_over.duration - game_over.currentTime)*1000); // пока не выполнится промис из функции, работа кода будет приостановлена
+			await sleep((game_over.duration - game_over.currentTime)*1000);
 			ctx.clearRect(0, 0, canvas.width, canvas.height); // очистка канваса
 			bird.src = state[0]; // смена состояния на обычное
 			return reload(); // колесо сансары дало оборот
@@ -216,10 +225,11 @@ function sleep(ms) {
 
 let start = function() {
 	/*
+	включает случайную фоновую музыку
 	отсоединяет эту функцию от события клика по канвасу
 	присваивает к событию нажатия на клавиву вызов функции moveUp
 	очищает канвас от элементов предыдущего экрана
-	задает вызов функции loop с интервалом в 1000/60 ms
+	вызывает основную функцию loop
 	*/
 
 	playMusic();
@@ -231,25 +241,24 @@ let start = function() {
 }
 
 
-let playMusic = function() {
-	ost = arrayRandElement(ostList);
-	ost.play();
-	ost.onended = () => playMusic();
-}
-
-
 let reload = function() {
 	/*
 	дефолтные значения переменных
 	создание начального экрана при загрузке страницы или после поражения
 	*/
 
-	gap = 90;
-	gravity = 2;
 	xPos = 10;
 	yPos = 200;
 	score = 0;
-	speed = 1;
+
+	gap = 95;
+	gravity = 2;
+	speed = 1 + (gravity%2);
+
+	offset_ = gravity*2 + !(gravity % 2);
+	offset = offset_*(10-offset_);
+	offset_per_iteration = offset_;
+
 	pipe = [];
 	pipe.push({x: canvas.width, y: 0}); // добавляем первое препятствие "за кадр"
 
@@ -266,8 +275,5 @@ let reload = function() {
 	canvas.addEventListener('click', start); // присоединяем событие клика на начальном экране к функции start
 }
 
-ostList[ostList.length-1].onloadeddata = function() {
-	ctx.fillStyle = "#000";
-	ctx.font = "bold 21px Calibri";
-	reload();
-}
+
+ostList[ostList.length-1].onloadeddata = () => reload();
