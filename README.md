@@ -62,9 +62,7 @@ let reload = function() {
 	canvas.addEventListener('click', start); // присоединяем событие клика на начальном экране к функции start
 }
 
-ostList[ostList.length-1].onloadeddata = function() {
-	reload();
-}
+ostList[ostList.length-1].onloadeddata = () => reload();
 ```
 
 ---
