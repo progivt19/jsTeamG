@@ -3,6 +3,7 @@ let ctx = canvas.getContext('2d');
 
 let timer = null; // айдишник setInterval
 let animation_ = null; // айдишник requestAnimationFrame
+let ost = null; // музыка
 
 // изображения
 let bg = new Image(); // фон
@@ -29,20 +30,17 @@ let fly = new Audio();
 let score_audio = new Audio();
 let damage = new Audio();
 let game_over = new Audio();
-let bg_music = new Audio();
+
+ostList = [];
+
+for (ost of ["ost1", "ost2", "ost3", "ost4", "ost5", "ost6"]) {
+	ostList.push(document.getElementById(ost))
+}
 
 fly.src = "assets\\sounds\\fly.mp3";
 score_audio.src = "assets\\sounds\\score.mp3";
 damage.src = "assets\\sounds\\damage.mp3";
 game_over.src = "assets\\sounds\\game_over.mp3";
-ostList = [
-	"assets\\sounds\\ost\\ost1.ogg", 
-	"assets\\sounds\\ost\\ost2.ogg", 
-	"assets\\sounds\\ost\\ost3.ogg", 
-	"assets\\sounds\\ost\\ost4.ogg", 
-	"assets\\sounds\\ost\\ost5.ogg",
-	"assets\\sounds\\ost\\ost6.ogg"
-	];
 
 // позиция птички, скорость ее постоянного снижения
 let xPos, yPos, gravity;
@@ -168,8 +166,8 @@ let fall = async function() {
 	}
 
 	cancelAnimationFrame(timer);
-	bg_music.pause();
-	bg_music.currentTime = 0;
+	ost.pause();
+	ost.currentTime = 0;
 	await sleep(75);
 	damage.play();
 	await sleep((damage.duration - damage.currentTime)*1000);
@@ -235,9 +233,8 @@ let start = function() {
 
 let playMusic = function() {
 	ost = arrayRandElement(ostList);
-	bg_music.src = ost;
-	bg_music.play();
-	bg_music.onended = () => playMusic();
+	ost.play();
+	ost.onended = () => playMusic();
 }
 
 

@@ -6,23 +6,21 @@
 </head>
 <body>
 	<canvas id="canvas" width="288" height="512"></canvas>
-	<script src="game.js"></script>
-	
 	<style type="text/css">
 		img {
 			visibility: hidden;
 			width: 0px;
-			height: 0px
+			height: 0px;
 		}
 	</style>
 
 	<div>
-		<audio src="assets/sounds/ost/ost1.ogg"></audio>
-		<audio src="assets/sounds/ost/ost2.ogg"></audio>
-		<audio src="assets/sounds/ost/ost3.ogg"></audio>
-		<audio src="assets/sounds/ost/ost4.ogg"></audio>
-		<audio src="assets/sounds/ost/ost5.ogg"></audio>
-		<audio src="assets/sounds/ost/ost6.ogg"></audio>
+		<audio id="ost1" src="assets/sounds/ost/ost1.ogg"></audio>
+		<audio id="ost2" src="assets/sounds/ost/ost2.ogg"></audio>
+		<audio id="ost3" src="assets/sounds/ost/ost3.ogg"></audio>
+		<audio id="ost4" src="assets/sounds/ost/ost4.ogg"></audio>
+		<audio id="ost5" src="assets/sounds/ost/ost5.ogg"></audio>
+		<audio id="ost6" src="assets/sounds/ost/ost6.ogg"></audio>
 		<img src="assets/getready.png">
 		<img src="assets/background.png">
 		<img src="assets/top.png">
@@ -31,5 +29,7 @@
 		<img src="assets/bird/2.png">
 		<img src="assets/bird/dead.png">
 	</div>
+
+	<script src="game.js"></script>
 </body>
 </html>
