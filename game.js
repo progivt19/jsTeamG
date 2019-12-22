@@ -260,7 +260,7 @@ let reload = function() {
 	offset_per_iteration = offset_;
 
 	pipe = [];
-	pipe.push({x: canvas.width, y: 0}); // добавляем первое препятствие "за кадр"
+	pipe.push({x: canvas.width, y: -1 * (Math.floor(Math.random() * (pipeUp.height-50)))}); // добавляем первое препятствие "за кадр"
 
 	ctx.drawImage(bg, 0, 0); // рисуем фон
 	ctx.drawImage(bird_default, xPos, yPos); // рисуем птичку с дефолтным начальным положением
