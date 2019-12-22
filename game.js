@@ -252,7 +252,7 @@ let reload = function() {
 	score = 0;
 
 	gap = 95;
-	gravity = 2;
+	gravity = 2; // 2 || 3 ; но лучше 2
 	speed = 1 + (gravity%2);
 
 	offset_ = gravity*2 + !(gravity % 2);
