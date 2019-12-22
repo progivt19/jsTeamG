@@ -9,8 +9,9 @@
 
 При запуске скриптового файла `game.js` создается экземпляр элемента canvas с последующим созданием объекта контекстного рисования в режиме двумерной графики. Также задаются настройки шрифта.
 ```JS
-let canvas = document.getElementById('canvas');
-let ctx = canvas.getContext('2d');
+let
+	canvas = document.getElementById('canvas'),
+	ctx = canvas.getContext('2d');
 
 ctx.fillStyle = "#000";
 ctx.font = "bold 21px Calibri";

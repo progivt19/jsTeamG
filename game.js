@@ -1,58 +1,66 @@
-let canvas = document.getElementById('canvas');
-let ctx = canvas.getContext('2d');
+let
+	canvas = document.getElementById('canvas'),
+	ctx = canvas.getContext('2d');
+
 
 ctx.fillStyle = "#000";
 ctx.font = "bold 21px Calibri";
 
-let timer = null; // айдишник setInterval
-let animation_ = null; // айдишник requestAnimationFrame
-let ost = null; // музыка
 
+let 
+	// переменные
+	timer = null, // айдишник setInterval
+	animation_ = null, // айдишник requestAnimationFrame
+	ost = null, // музыка
 
-// изображения
-let bg = new Image(); // фон
-let pipeUp = new Image(); // верхнее препятствие
-let pipeDown = new Image(); // нижнее препятствие
-let get_ready = new Image(); // надпись Get Ready
-let bird = new Image(); // птичка
-let bird_default = new Image(); // птичка-костыль
+	// изображения
+	bg = new Image(), // фон
+	pipeUp = new Image(), // верхнее препятствие
+	pipeDown = new Image(), // нижнее препятствие
+	get_ready = new Image(), // надпись Get Ready
+	bird = new Image(), // птичка
+	bird_default = new Image(); // птичка-костыль
+	state = ["assets\\bird\\1.png", "assets\\bird\\2.png", "assets\\bird\\dead.png"]; // состояния птички: стандартная, взмах, смэрть
 
 bg.src = "assets\\background.png";
 pipeUp.src = "assets\\top.png";
 pipeDown.src = "assets\\bottom.png";
 get_ready.src = "assets\\getready.png";
-
-let state = ["assets\\bird\\1.png", "assets\\bird\\2.png", "assets\\bird\\dead.png"]; // состояния птички: стандартная, взмах, смэрть
 bird.src = state[0];
 bird_default.src = state[0];
 
 
-// звук взмаха, звук увеличения количества очков, звук поражения, фоновые мелодии
-let fly = new Audio();
-let score_audio = new Audio();
-let damage = new Audio();
-let game_over = new Audio();
-let ostList = document.getElementById("osts").getElementsByTagName("audio"); // получаем все объекты аудио из блока span#osts
+let
+	// звук взмаха, звук увеличения количества очков, звук поражения, фоновые мелодии
+	fly = new Audio(),
+	score_audio = new Audio(),
+	damage = new Audio(),
+	game_over = new Audio(),
+	ostList = document.getElementById("osts").getElementsByTagName("audio"); // получаем все объекты аудио из блока span#osts
 
 fly.src = "assets\\sounds\\fly.mp3";
 score_audio.src = "assets\\sounds\\score.mp3";
 damage.src = "assets\\sounds\\damage.mp3";
 game_over.src = "assets\\sounds\\game_over.mp3";
 
-// позиция птички, скорость ее постоянного снижения; то, насколько будет птичка подниматься при каждом нажатии на space; то, как быстро птичка будет достигать этой величины
-let xPos, yPos, gravity, offset, offset_per_iteration;
 
-// пробел между препятствиями, список объектов, содержащий координаты препятствий, скорость движения препятствий(скорее булевое значение 1 - двигаются; 0 - не двигаются; значение больше 1 делают игру некрасивой)
-let gap, pipe, speed;
+let 
+	// позиция птички, скорость ее постоянного снижения; то, насколько будет птичка подниматься при каждом нажатии на space; то, как быстро птичка будет достигать этой величины
+	xPos, yPos, gravity, offset, offset_per_iteration,
 
-// счет, рекорд
-let score, record = 0;
+	// пробел между препятствиями, список объектов, содержащий координаты препятствий, скорость движения препятствий(скорее булевое значение 1 - двигаются; 0 - не двигаются; значение больше 1 делают игру некрасивой)
+	gap, pipe, speed,
+
+	// счет, рекорд
+	score, record = 0;
 
 
 let arrayRandElement = function(arr) {
 	// функция, возвращающая случайный элемент массива
 
-	let rand = Math.floor(Math.random() * arr.length);
+	let 
+		rand = Math.floor(Math.random() * arr.length);
+
 	return arr[rand];
 }
 
@@ -81,7 +89,9 @@ let moveUp = function(e) {
 	cancelAnimationFrame(animation_); // закрываем предыдущий фрейм, чтобы не было неожиданных "подскоков"
 
 	bird.src = state[1]; // взмах
-	let pos = yPos - offset; // та точка по Y, в которой должна будет оказаться птичка
+
+	let 
+		pos = yPos - offset; // та точка по Y, в которой должна будет оказаться птичка
 
 	function _animation() {
 		if (pos > yPos) {
@@ -109,8 +119,6 @@ let loop = function() {
 		ctx.drawImage(pipeUp, pipe[i].x, pipe[i].y);
 		ctx.drawImage(pipeDown, pipe[i].x, pipe[i].y + pipeUp.height + gap);
 
-		pipe[i].x -= speed;
-
 		if (pipe[i].x == 100) {
 			pipe.push({
 				x: canvas.width,
@@ -120,10 +128,6 @@ let loop = function() {
 
 		// столкновение с низом
 		if (yPos + bird.height >= canvas.height) {
-			if (score > record) { // по умолчанию record = 0
-				record = score;
-			}
-
 			return fall();
 		}
 
@@ -134,14 +138,12 @@ let loop = function() {
 					// если позиция птички по Y меньше позиции нижней части верхней стены
 					// либо позиция птички по Y больше позиции верхней части нижней стены
 
-					if (score > record) { // по умолчанию record = 0
-						record = score;
-					}
-
 					return fall();
 				}
 			}
 		}
+
+		pipe[i].x -= speed;
 
 		if(pipe[i].x == -50) {
 			score++;
@@ -168,20 +170,33 @@ let fall = async function() {
 	ctx.drawImage(bird, xPos, yPos);
 	ctx.drawImage(pipeUp, pipe[pipe.length-1].x, pipe[pipe.length-1].y);
 	ctx.drawImage(pipeDown, pipe[pipe.length-1].x, pipe[pipe.length-1].y + pipeUp.height + gap);
+	ctx.fillText("Счет: " + score, 5, 20);
+
+	if (record != 0) {
+		ctx.fillText("Рекорд: " + record, 5, 40);
+	}
+
+	if (score > record) { // по умолчанию record = 0
+		record = score;
+	}
 
 	if (animation_ != null) {
 		cancelAnimationFrame(animation_);
 	}
 
 	cancelAnimationFrame(timer);
-	ost.pause(); // остановка фоновой музыки
-	ost.currentTime = 0;
+	ost.pause();
+	ost.currentTime = 0;  // остановка фоновой музыки
 
-	await sleep(75); // пока не выполнится промис из функции, работа кода будет приостановлена
-	damage.play();
-	await sleep((damage.duration - damage.currentTime)*1000);
+	await
+		sleep(75); // пока не выполнится промис из функции, работа кода будет приостановлена
+	
+	damage.play(); // удар
+
+	await
+		sleep((damage.duration - damage.currentTime)*1000);
+
 	game_over.play(); // проигрыш звука поражения
-
 	gravity = 5;
 	bird.src = state[2];
 
@@ -203,7 +218,9 @@ let fall = async function() {
 		}
 
 		if (yPos > canvas.height) {
-			await sleep((game_over.duration - game_over.currentTime)*1000);
+			await
+				sleep((game_over.duration - game_over.currentTime)*1000);
+
 			ctx.clearRect(0, 0, canvas.width, canvas.height); // очистка канваса
 			bird.src = state[0]; // смена состояния на обычное
 			return reload(); // колесо сансары дало оборот
@@ -213,7 +230,7 @@ let fall = async function() {
 		animation_ = requestAnimationFrame(fall_);
 	}
 
-	fall_();
+	requestAnimationFrame(fall_);
 }
 
 
