@@ -4,7 +4,7 @@ let
 
 
 ctx.fillStyle = "#000";
-ctx.font = "bold 21px Calibri";
+ctx.font = "20px Troika"
 
 
 let 
@@ -294,3 +294,23 @@ let reload = function() {
 
 
 ostList[ostList.length-1].onloadeddata = () => reload();
+
+// // где то в начале файла
+// let score_list = [0, 0, 0];
+
+// // код
+
+// 		if(snakeX < box || snakeX > box * 17
+// 			|| snakeY < 3 * box || snakeY > box * 17) {
+
+// 			if (score) > score_list[score_list.length-1] {
+// 				score_list.push(score);
+// 			}
+
+// 			clearInterval(game);
+// 			drawTable();
+// 		}
+
+// // код
+
+// function drawTable()
