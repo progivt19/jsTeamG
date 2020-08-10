@@ -22,6 +22,7 @@ let
 	bird_default = new Image(); // птичка-костыль
 	state = ["assets\\bird\\1.png", "assets\\bird\\2.png", "assets\\bird\\dead.png"]; // состояния птички: стандартная, взмах, смэрть
 
+
 bg.src = "assets\\background.png";
 pipeUp.src = "assets\\top.png";
 pipeDown.src = "assets\\bottom.png";
@@ -38,6 +39,7 @@ let
 	game_over = new Audio(),
 	ostList = document.getElementById("osts").getElementsByTagName("audio"); // получаем все объекты аудио из блока span#osts
 
+
 fly.src = "assets\\sounds\\fly.mp3";
 score_audio.src = "assets\\sounds\\score.mp3";
 damage.src = "assets\\sounds\\damage.mp3";
@@ -45,23 +47,59 @@ game_over.src = "assets\\sounds\\game_over.mp3";
 
 
 let 
-	// позиция птички, скорость ее постоянного снижения; то, насколько будет птичка подниматься при каждом нажатии на space; то, как быстро птичка будет достигать этой величины
-	xPos, yPos, gravity, offset, offset_per_iteration,
+	// сколько "времени" птичка не взмахивает крыльями <:
+	time,
 
-	// пробел между препятствиями, список объектов, содержащий координаты препятствий, скорость движения препятствий(скорее булевое значение 1 - двигаются; 0 - не двигаются; значение больше 1 делают игру некрасивой)
+	// позиция птички, скорость падения, скорость изменения time, высота взмаха; скорость, с которой птичка полетит вверх при в взмахе
+	xPos, yPos, speed_of_falling, time_speed, swing, speed_of_swing,
+
+	// пробел между препятствиями, список объектов, содержащий координаты препятствий, скорость движения препятствий
 	gap, pipe, speed,
 
 	// счет, рекорд
 	score, record = 0;
 
 
+function reload() {
+	/*
+	дефолтные значения переменных
+	создание начального экрана при загрузке страницы или после поражения
+	*/
+
+	xPos = 10;
+	yPos = 200;
+	score = 0;
+
+	time = 0;
+
+	speed_of_falling = 1;
+	time_speed = 5;
+	swing = 15;
+	speed_of_swing = 3;
+
+	speed = 2;
+	gap = 80;
+	pipe = [];
+	pipe.push({x: canvas.width, y: -1 * random(0, pipeUp.height-50)}); // добавляем первое препятствие "за кадр"
+
+	ctx.drawImage(bg, 0, 0); // рисуем фон
+	ctx.drawImage(bird_default, xPos, yPos); // рисуем птичку с дефолтным начальным положением
+	ctx.drawImage(get_ready, 13, 90); // рисуем надпись Get Ready
+
+	ctx.fillText("Счет: " + score, 5, 20); // создаем текст счета
+
+	if (record != 0) {
+		ctx.fillText("Рекорд: " + record, 5, 40);
+	}
+
+	canvas.addEventListener('click', start); // присоединяем событие клика на начальном экране к функции start
+}
+
+
 let arrayRandElement = function(arr) {
 	// функция, возвращающая случайный элемент массива
 
-	let 
-		rand = Math.floor(Math.random() * arr.length);
-
-	return arr[rand];
+	return arr[random(0, arr.length-1)];
 }
 
 
@@ -74,10 +112,40 @@ let playMusic = function() {
 }
 
 
-let moveUp = function(e) {
+let sleep = function(ms) {
+	// как только вызов функциb завершится, промис примет выполненное состояние, до тех пор код будет находиться в состоянии ожидания
+	
+	return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+
+let random = function(first, last) {
+	/*
+	возвращает случайное число в указанном промежутке
+	*/
+
+	let res = Math.floor(Math.random() * (last));
+
+	if ((first + res) <= last) {
+		return first + res;
+	}
+	else {
+		return res;
+	}
+}
+
+
+let speed_func = function(speed, t) {
+	// \_(>_<)_/
+
+	return speed + (0.00098 * t)
+}
+
+
+function moveUp(e) {
 	/*
 	в качестве аргумента передается объект <События нажатия>, содержащий в себе информацию о нем(например, то, какая клавиша была нажата)
-	выполняется гладкая анимация полета птички, за счет последовательного изменения ее положения и последующей смене кадра
+	выполняется гладкая(болиелимение) анимация полета птички, за счет последовательного изменения ее положения и последующей смене кадра
 	анимация(взмах крыльями) достигается переменной сменой изображений из списка state
 	после выполнения операции взлета проигрывается звук взмаха
 	*/
@@ -86,12 +154,13 @@ let moveUp = function(e) {
 		return;
 	}
 
+	speed_of_falling = 1;
+	time = 1;
 	cancelAnimationFrame(animation_); // закрываем предыдущий фрейм, чтобы не было неожиданных "подскоков"
 
 	bird.src = state[1]; // взмах
 
-	let 
-		pos = yPos - offset; // та точка по Y, в которой должна будет оказаться птичка
+	let pos = yPos - swing; // та точка по Y, в которой должна будет оказаться птичка
 
 	function _animation() {
 		if (pos > yPos) {
@@ -99,7 +168,7 @@ let moveUp = function(e) {
 			return;
 		}
 
-		yPos-=offset_per_iteration;
+		yPos -= speed_of_swing;
 		animation_ = requestAnimationFrame(_animation);
 	}
 
@@ -108,7 +177,7 @@ let moveUp = function(e) {
 }
 
 
-let loop = function() {
+function loop() {
 	ctx.drawImage(bg, 0, 0);
 
 	if (pipe.length > 4) { // оптимизация списка преград
@@ -122,7 +191,7 @@ let loop = function() {
 		if (pipe[i].x == 100) {
 			pipe.push({
 				x: canvas.width,
-				y: -1 * (Math.floor(Math.random() * (pipeUp.height-50)))
+				y: -1 * random(0, pipeUp.height-50)
 			});
 		}
 
@@ -152,7 +221,10 @@ let loop = function() {
 	}
 
 	ctx.drawImage(bird, xPos, yPos);
-	yPos += gravity; // действие гравитации
+	speed_of_falling = speed_func(speed_of_falling, time);
+	yPos += speed_of_falling;
+	time = time+time_speed
+
 	ctx.fillText("Счет: " + score, 5, 20);
 
 	if (record != 0) {
@@ -163,7 +235,7 @@ let loop = function() {
 }
 
 
-let fall = async function() {
+async function fall() {
 	document.removeEventListener('keydown', moveUp);
 
 	// рисовка недорисиванного
@@ -197,8 +269,10 @@ let fall = async function() {
 		sleep((damage.duration - damage.currentTime)*1000);
 
 	game_over.play(); // проигрыш звука поражения
-	gravity = 5;
 	bird.src = state[2];
+
+	time = 1;
+	speed_of_falling = 2;
 
 	let fall_ = async function() {
 		// анимация падения
@@ -226,7 +300,9 @@ let fall = async function() {
 			return reload(); // колесо сансары дало оборот
 		}
 
-		yPos += gravity;
+		speed_of_falling = speed_func(speed_of_falling, time);
+		yPos += speed_of_falling;
+		time = time+time_speed;
 		animation_ = requestAnimationFrame(fall_);
 	}
 
@@ -234,13 +310,7 @@ let fall = async function() {
 }
 
 
-function sleep(ms) {
-	// как только вызов функция завершится, промис примет выполненное состояние, до тех пор код будет находиться в состоянии ожидания
-	return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-
-let start = function() {
+function start() {
 	/*
 	включает случайную фоновую музыку
 	отсоединяет эту функцию от события клика по канвасу
@@ -258,59 +328,4 @@ let start = function() {
 }
 
 
-let reload = function() {
-	/*
-	дефолтные значения переменных
-	создание начального экрана при загрузке страницы или после поражения
-	*/
-
-	xPos = 10;
-	yPos = 200;
-	score = 0;
-
-	gap = 95;
-	gravity = 2; // 2 || 3 ; но лучше 2
-	speed = 1 + (gravity%2);
-
-	offset_ = gravity*2 + !(gravity % 2);
-	offset = offset_*(10-offset_);
-	offset_per_iteration = offset_;
-
-	pipe = [];
-	pipe.push({x: canvas.width, y: -1 * (Math.floor(Math.random() * (pipeUp.height-50)))}); // добавляем первое препятствие "за кадр"
-
-	ctx.drawImage(bg, 0, 0); // рисуем фон
-	ctx.drawImage(bird_default, xPos, yPos); // рисуем птичку с дефолтным начальным положением
-	ctx.drawImage(get_ready, 13, 90); // рисуем надпись Get Ready
-
-	ctx.fillText("Счет: " + score, 5, 20); // создаем текст счета
-
-	if (record != 0) {
-		ctx.fillText("Рекорд: " + record, 5, 40);
-	}
-
-	canvas.addEventListener('click', start); // присоединяем событие клика на начальном экране к функции start
-}
-
-
 ostList[ostList.length-1].onloadeddata = () => reload();
-
-// // где то в начале файла
-// let score_list = [0, 0, 0];
-
-// // код
-
-// 		if(snakeX < box || snakeX > box * 17
-// 			|| snakeY < 3 * box || snakeY > box * 17) {
-
-// 			if (score) > score_list[score_list.length-1] {
-// 				score_list.push(score);
-// 			}
-
-// 			clearInterval(game);
-// 			drawTable();
-// 		}
-
-// // код
-
-// function drawTable()
